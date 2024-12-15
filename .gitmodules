@@ -1,0 +1,9 @@
+[submodule "libs/libtrue"]
+	path = libs/libtrue
+	url = git@github.com:AhmedHodiani/libtrue.git
+[submodule "libs/libft"]
+	path = libs/libft
+	url = git@github.com:AhmedHodiani/libft.git
+[submodule "libs/libftprintf"]
+	path = libs/libftprintf
+	url = git@github.com:AhmedHodiani/libftprintf.git
