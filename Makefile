@@ -35,7 +35,7 @@ copy_include:
 		rm -rf include/$${lib}; \
 		mkdir -p include/$${lib}; \
 		cp libs/$${lib}/include/* include/$${lib}/; \
-		echo "#include \"$${lib}/*.h\"" >> include/header.h; \
+		echo "#include \"$${lib}/$${lib}.h\"" >> include/header.h; \
 	done
 
 fclean: clean
