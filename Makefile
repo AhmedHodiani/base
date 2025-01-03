@@ -1,45 +1,44 @@
-SRCS			= src/main.c
-OBJS			= $(SRCS:src/%.c=${BUILD_DIR}/obj/%.o)
-
 NAME			= out
 CC				= cc
 CFLAGS			= -Wall -Wextra -Werror
-BUILD_DIR		= build
+BUILD_PATH		?= ./build
 
-LIBS			= libtrue libft libftprintf
-LIBS_FLAGS		= $(foreach lib,$(patsubst lib%,%, $(LIBS)),-l$(lib))
+DEPENDENCIES		= libtrue libft libftprintf
+DEPENDENCIES_DIR	= ./dependencies
+DEPENDENCIES_FLAGS	= $(foreach lib,$(DEPENDENCIES),-L$(BUILD_PATH)/$(lib)) \
+						$(foreach lib,$(patsubst lib%,%, $(DEPENDENCIES)),-l$(lib))
+INCLUDE_FLAGS		= -Iinclude $(foreach lib,$(DEPENDENCIES),-Iinclude/$(lib))
 
-all: ${NAME}
+SRCS			= src/main.c
+OBJS			= $(SRCS:src/%.c=$(BUILD_PATH)/obj/%.o)
 
-${NAME}: $(OBJS) $(foreach lib,$(LIBS),$(BUILD_DIR)/$(lib).a)
-	@$(CC) $(CFLAGS) $(OBJS) -L${BUILD_DIR} ${LIBS_FLAGS} -o ${NAME}
-	@mv ${NAME} ${BUILD_DIR}/${NAME}
+all: $(NAME)
 
-$(BUILD_DIR)/%.a:
-	@mkdir -p $(BUILD_DIR)
-	@$(MAKE) -C libs/$* all
-	@rm -rf $(BUILD_DIR)/$*_obj
-	@mv libs/$*/obj $(BUILD_DIR)/$*_obj
-	@mv libs/$*/*.a $(BUILD_DIR)/$*.a
+$(NAME): $(OBJS) $(foreach lib,$(DEPENDENCIES),$(BUILD_PATH)/$(lib)/$(lib).a)
+	$(CC) $(CFLAGS) $(OBJS) $(DEPENDENCIES_FLAGS) $(INCLUDE_FLAGS) -o $(NAME)
 
-$(BUILD_DIR)/obj/%.o: src/%.c
-	@mkdir -p build/obj
-	@$(CC) $(CFLAGS) -L${BUILD_DIR} ${LIBS_FLAGS} -c $< -o $@
+$(foreach lib,$(DEPENDENCIES),$(BUILD_PATH)/$(lib)/$(lib).a):
+	$(MAKE) -C $(DEPENDENCIES_DIR)/$(basename $(@F)) BUILD_PATH=../../$(BUILD_PATH)/$(basename $(@F)) all
+
+$(BUILD_PATH)/obj/%.o: src/%.c
+	@mkdir -p $(BUILD_PATH)/obj
+	$(CC) $(CFLAGS) $(DEPENDENCIES_FLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
 clean:
-	@rm -rf ${BUILD_DIR}/obj
-	@rm -rf ${BUILD_DIR}/*_obj
+	@rm -rf $(BUILD_PATH)/obj
+	@rm -rf $(BUILD_PATH)/lib*/obj
 
 copy_include:
-	@for lib in ${LIBS}; do \
-		rm -rf include/$${lib}; \
-		mkdir -p include/$${lib}; \
-		cp libs/$${lib}/include/* include/$${lib}/; \
-		echo "#include \"$${lib}/$${lib}.h\"" >> include/header.h; \
+	@for lib in $(DEPENDENCIES); do \
+		rm -rf include/$$lib; \
+		mkdir -p include/$$lib; \
+		cp $(DEPENDENCIES_DIR)/$$lib/include/* include/$$lib/; \
+		echo "#include \"$$lib/$$lib.h\"" >> include/header.h; \
 	done
 
 fclean: clean
-	@rm -rf ${BUILD_DIR}
+	@rm -rf $(NAME)
+	@rm -rf $(BUILD_PATH)
 
 re: fclean all
 
